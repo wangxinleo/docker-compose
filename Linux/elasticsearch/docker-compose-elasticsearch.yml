@@ -22,6 +22,7 @@ services:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xmx512m -Xms512m"
       ELASTIC_PASSWORD: "123456" # elastic账号密码
+      TAKE_FILE_OWNERSHIP: "true"
     ports:
       - "9200:9200"
       - "9300:9300"
