@@ -78,6 +78,8 @@ sudo pip3 install --upgrade pip
 # 验证pip3版本
 pip3 --version
 # docker-compose安装
+# 使用国内资源加速安装
+# sudo pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -U docker-compose
 sudo pip3 install -U docker-compose
 # 验证docker-compose版本
 docker-compose --version
