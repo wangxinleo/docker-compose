@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server
+    # 必须拥有最大权限否则启动创建文件时会报错
+    privileged: true
+    container_name: mssql-server
+    restart: always
+    environment:
+      #接受最终用户许可协议
+      - ACCEPT_EULA=Y
+      #SA用户密码，密码长度必须至少为8个字符，并且包含以下四组中的三组字符：大写字母、小写字母、数字和符号。
+      - SA_PASSWORD=Andyalone2024
+    ports:
+      - 1433:1433
+    volumes:
+      - ./mssql:/var/opt/mssql
