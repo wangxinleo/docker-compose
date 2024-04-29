@@ -1,0 +1,110 @@
+version: '3'
+
+networks:
+  efkk:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.22.6.0/24"
+
+services:
+  zookepper:
+    image: registry.cn-hangzhou.aliyuncs.com/zhengqing/zookeeper:latest
+    container_name: zookeeper-server
+    restart: unless-stopped
+    volumes:
+      - "/etc/localtime:/etc/localtime"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+    expose:
+      - "2181"
+    networks:
+      efkk:
+        ipv4_address: 172.22.6.11
+
+  kafka:
+    image: registry.cn-hangzhou.aliyuncs.com/zhengqing/kafka:3.4.1
+    container_name: kafka
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    volumes:
+      - "/etc/localtime:/etc/localtime"
+      - "./app/kafka:/bitnami/kafka"
+    environment:
+      KAFKA_HEAP_OPTS: "-Xmx1024m -Xms1024m"
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookepper:2181
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_EXTERNAL_HOST}:9092
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookepper
+    links:
+      - zookepper
+    networks:
+      efkk:
+        ipv4_address: 172.22.6.12
+
+  elasticsearch:
+    image: registry.cn-hangzhou.aliyuncs.com/zhengqing/elasticsearch:7.14.1      # 原镜像`elasticsearch:7.14.1`
+    container_name: elasticsearch             # 容器名为'elasticsearch'
+    restart: unless-stopped                           # 指定容器退出后的重启策略为始终重启，但是不考虑在Docker守护进程启动时就已经停止了的容器
+    volumes:                                  # 数据卷挂载路径设置,将本机目录映射到容器目录
+      - "/etc/localtime:/etc/localtime"
+      - "./app/elasticsearch/data:/usr/share/elasticsearch/data"
+      - "./app/elasticsearch/logs:/usr/share/elasticsearch/logs"
+      - "./app/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml"
+#      - "./app/elasticsearch/config/jvm.options:/usr/share/elasticsearch/config/jvm.options"
+      - "./app/elasticsearch/plugins/ik:/usr/share/elasticsearch/plugins/ik" # IK中文分词插件
+    environment:                              # 设置环境变量,相当于docker run命令中的-e
+      TZ: Asia/Shanghai
+      LANG: en_US.UTF-8
+      TAKE_FILE_OWNERSHIP: "true"
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xmx1024m -Xms1024m"
+      ELASTIC_PASSWORD: "t1izUrGP6uiC7aZBG1m5"
+    expose:
+      - "9200"
+      - "9300"
+    networks:
+      efkk:
+        ipv4_address: 172.22.6.13
+
+  kibana:
+    image: registry.cn-hangzhou.aliyuncs.com/zhengqing/kibana:7.14.1       # 原镜像`kibana:7.14.1`
+    container_name: kibana
+    restart: unless-stopped
+    volumes:
+      - "/etc/localtime:/etc/localtime"
+      - "./app/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml"
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    links:
+      - elasticsearch
+    networks:
+      efkk:
+        ipv4_address: 172.22.6.14
+  fluentd:
+    image: bbowenhhuang/fluentd-es-kafka-plugin:v1.0.0
+    container_name: fluentd
+    restart: unless-stopped
+    volumes:
+      - "/etc/localtime:/etc/localtime"
+      - "./app/fluentd/conf:/fluentd/etc"
+      - "./app/fluentd/log:/fluentd/log"
+    depends_on:
+      - elasticsearch
+      - kafka
+    links:
+      - "elasticsearch"
+      - "kafka"
+    expose:
+      - "24224"
+      - "24224/udp"
+    networks:
+      efkk:
+        ipv4_address: 172.22.6.15
+    
