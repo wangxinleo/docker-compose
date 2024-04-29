@@ -15,26 +15,43 @@ docker system df
 # Build Cache     0         0         0B        0B
 ```
 
-### 自动清理空间
+### 清理悬挂的容器（即已停止的容器）
 
-- 已停止的容器（container）
-- 未被任何容器所使用的卷（volume）
-- 未被任何容器所关联的网络（network）
-- 所有悬空镜像（image）
-- -a: 清除所有未使用的镜像和悬空镜像
+```shell
+docker container prune
+
+# 不用输入y确认
+# docker container prune -f
+```
+
+### 清理未使用的镜像（不包括标签为':'的镜像）
+
+```shell
+docker image prune -a
+```
+
+### 清理未使用的网络
+
+```shell
+docker network prune
+```
+
+### 清理未使用的卷
+
+```shell
+docker volume prune
+```
+
+### 清理所有未被容器使用的镜像、网络和卷
+
+```shell
+docker system prune
+```
+
+### 清理所有未被容器使用的镜像、网络、卷、构建缓存
 
 ```shell
 docker system prune -a
-```
-
-### 清理未使用的数据卷
-
-```shell
-# 将未被使用的数据卷清理掉
-docker volume prune
-
-# 不用输入y确认
-# docker volume prune -f
 ```
 
 ---
